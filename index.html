@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DELTA GREEN // LETHALITY PROTOCOL</title>
+    <style>
+        /* デルタグリーン風スタイル定義 */
+        body {
+            background-color: #0d0d0d;
+            color: #33ff00;
+            font-family: "Courier New", Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            text-align: left;
+            line-height: 1.4;
+        }
+        h1 {
+            font-size: 1.2rem;
+            border-bottom: 2px solid #33ff00;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            border: 1px solid #1a5c00;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(51, 255, 0, 0.2);
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        input[type="number"], input[type="text"] {
+            background-color: #000;
+            border: 1px solid #33ff00;
+            color: #33ff00;
+            padding: 8px;
+            width: 100%;
+            font-family: inherit;
+            font-size: 1.1rem;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            background-color: #111;
+            box-shadow: 0 0 5px #33ff00;
+        }
+        button {
+            background-color: #1a5c00;
+            color: #33ff00;
+            border: 1px solid #33ff00;
+            padding: 15px;
+            width: 100%;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+        button:hover {
+            background-color: #33ff00;
+            color: #000;
+        }
+        #result-area {
+            margin-top: 30px;
+            border-top: 1px dashed #33ff00;
+            padding-top: 20px;
+            display: none; /* 最初は隠す */
+        }
+        .result-main {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+            text-shadow: 0 0 5px #33ff00;
+        }
+        .warning-text {
+            color: #ff3333;
+            font-weight: bold;
+        }
+        .guide-text {
+            font-size: 0.85rem;
+            color: #aaffaa;
+            background-color: #001100;
+            padding: 10px;
+            border: 1px solid #1a5c00;
+            margin-top: 10px;
+        }
+        .scan-line {
+            width: 100%;
+            height: 2px;
+            background: rgba(51, 255, 0, 0.3);
+            position: fixed;
+            top: 0;
+            left: 0;
+            animation: scan 3s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes scan {
+            0% { top: 0%; }
+            100% { top: 100%; }
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.7rem;
+            color: #1a5c00;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="scan-line"></div>
+
+<div class="container">
+    <h1>>> LETHALITY_CALCULATOR_v.8.0</h1>
+    
+    <div class="input-group">
+        <label for="dmg">WEAPON_DAMAGE (Max Die Roll)</label>
+        <input type="number" id="dmg" placeholder="e.g. 16 (for 2d8)" min="0">
+        <div style="font-size:0.7rem; color:#1a5c00;">※武器の最大ダメージを入力 (例: 2d8なら16)</div>
+    </div>
+
+    <div class="input-group">
+        <label for="count">VOLLEY_COUNT (Bullets Fired)</label>
+        <input type="number" id="count" placeholder="e.g. 30" min="0">
+    </div>
+
+    <div class="input-group">
+        <label for="armor">TARGET_ARMOR (Armor Value or Average Calc)</label>
+        <!-- type="number" から type="text" に変更 -->
+        <input type="text" id="armor" placeholder="e.g. 4 or 3*2,1*4" value="0">
+        <div style="font-size:0.7rem; color:#1a5c00;">※通常は数値を入力。「装甲*人数,装甲*人数」で平均装甲値を算出可能（例: 3*2,1*4）</div>
+    </div>
+
+    <div class="input-group">
+        <label>TARGET_RESISTANCE (Special Damage Reduction)</label>
+        <div style="margin-top: 5px;">
+            <label style="display:inline-block; margin-right:10px; font-weight:normal; color:#aaffaa;">
+                <input type="radio" name="resist" value="none" checked> なし
+            </label>
+            <label style="display:inline-block; margin-right:10px; font-weight:normal; color:#aaffaa;">
+                <input type="radio" name="resist" value="half"> 半減 (1/2)
+            </label>
+            <label style="display:inline-block; margin-right:10px; font-weight:normal; color:#aaffaa;">
+                <input type="radio" name="resist" value="quarter"> 1/4
+            </label>
+            <label style="display:inline-block; font-weight:normal; color:#aaffaa;">
+                <input type="radio" name="resist" value="bulletproof"> 弾丸耐性 (1固定)
+            </label>
+        </div>
+        <div style="font-size:0.7rem; color:#1a5c00;">※装甲値(ARMOR)で減算する「前」に、武器の基礎ダメージを軽減します。端数切り捨て。</div>
+    </div>
+
+    <div class="input-group">
+        <label for="targets">TARGET_COUNT (Number of Enemies)</label>
+        <input type="number" id="targets" placeholder="e.g. 1" min="1" value="1">
+        <div style="font-size:0.7rem; color:#1a5c00;">※複数対象の場合、弾数÷3が巻き込み上限となります</div>
+    </div>
+
+    <button onclick="calculate()">[ EXECUTE ANALYSIS ]</button>
+
+    <div id="result-area">
+        <div>>> ANALYSIS COMPLETE.</div>
+        <div class="result-main" id="lethality-display">LETHALITY: --%</div>
+        <div id="threat-level"></div>
+        
+        <div class="guide-text">
+            <strong>【交戦規定 / PROTOCOL】</strong><br>
+            1. 1d100をロールせよ。<br>
+            2. 目標値以下なら <span style="color:#fff;">[即死]</span>。<br>
+            3. 失敗なら <span style="color:#fff;">[出目の合計 - 装甲値]</span> ダメージ。<br>
+            <span id="damage-example" style="color:#88ff88;">(システム待機中...)</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        SECURITY CLEARANCE: A-CELL ONLY<br>
+        UNAUTHORIZED ACCESS WILL BE LOGGED.
+    </div>
+</div>
+
+<script>
+    function calculate() {
+        // 入力値の取得（負の数は0、ターゲット数は最低1に強制変換）
+        let d = Math.max(0, parseInt(document.getElementById('dmg').value) || 0);
+        let c = Math.max(0, parseInt(document.getElementById('count').value) || 0);
+        let t = Math.max(1, parseInt(document.getElementById('targets').value) || 1);
+
+        // --- 装甲値の特殊パース処理 ---
+        let rawArmorInput = document.getElementById('armor').value.trim();
+        let a = 0;
+
+        // 入力に "*" または "," が含まれている場合は特殊計算を行う
+        if (rawArmorInput.includes('*') || rawArmorInput.includes(',')) {
+            let parts = rawArmorInput.split(',');
+            let totalArmorSum = 0;
+            let armorTargetCount = 0;
+            
+            for (let part of parts) {
+                // "3*2" のような文字列を "3" と "2" に分割
+                let [armorVal, countVal] = part.split('*');
+                let arm = parseInt(armorVal) || 0;
+                let cnt = parseInt(countVal) || 1; // *以降の記述がない場合は1体として扱う
+                
+                totalArmorSum += (arm * cnt);
+                armorTargetCount += cnt;
+            }
+            
+            // 平均装甲値を算出し、四捨五入する（例: 10 / 6 = 1.66... -> 2）
+            if (armorTargetCount > 0) {
+                a = Math.round(totalArmorSum / armorTargetCount);
+            }
+        } else {
+            // 通常の数値入力の場合
+            a = Math.max(0, parseInt(rawArmorInput) || 0);
+        }
+
+        // フォーム上の見た目を正しい数値で上書き更新
+        document.getElementById('dmg').value = d;
+        document.getElementById('count').value = c;
+        document.getElementById('targets').value = t;
+        
+        // 特殊入力構文("3*2,1*4"など)を維持するため、単純な数値入力の時のみ値を上書きする
+        if (!rawArmorInput.includes('*') && !rawArmorInput.includes(',')) {
+            document.getElementById('armor').value = a;
+        }
+
+        // --- 追加箇所 ここから ---
+        // 神話生物等の特殊耐性によるダメージ減衰（装甲適用前）
+        let resistOption = document.querySelector('input[name="resist"]:checked').value;
+        if (resistOption === "half") {
+            d = Math.floor(d / 2);
+        } else if (resistOption === "quarter") {
+            d = Math.floor(d / 4);
+        } else if (resistOption === "bulletproof") {
+            d = 1; // 弾丸耐性は入力ダメージを強制的に1にする
+        }
+        // --- 追加箇所 ここまで ---
+
+        // 【追加機能①】巻き込み上限のチェック (弾数 ÷ 3)
+
+        // 【追加機能①】巻き込み上限のチェック (弾数 ÷ 3)
+        let maxTargets = Math.floor(c / 3);
+        let actualTargets = t;
+        let warningText = "";
+
+        if (t > 1) {
+            if (c < 3) {
+                // 弾が3発未満の場合は単体しか狙えない
+                actualTargets = 1;
+                warningText = "<br><span style='font-size:0.8rem; color:#ffaa00;'>[WARNING] 弾数不足により単体射撃に修正。</span>";
+            } else if (t > maxTargets) {
+                // 上限以上の敵を狙った場合は限界数に切り詰める
+                actualTargets = maxTargets;
+                warningText = `<br><span style='font-size:0.8rem; color:#ffaa00;'>[WARNING] 巻き込み上限超過により対象を${actualTargets}体に修正。</span>`;
+            }
+        }
+
+        // 【追加機能②】有効弾数の計算 (複数人の場合のみ、人数/2 で割る)
+        let effectiveCount = c;
+        if (actualTargets > 1) {
+            effectiveCount = c / (actualTargets / 2);
+        }
+
+        // --- 修正箇所 ここから ---
+        // 計算ロジック: 装甲がダメージを上回った場合はマイナスにならないよう修正
+        let d_a = Math.max(0, d - a); 
+        let lethality = 0;
+
+        // ダメージが装甲を1以上上回る（貫通する）場合のみ致死率を計算する
+        if (d_a > 0) {
+            // 分母に適用する装甲値は「5」をキャップ（上限）とする
+            let a_denominator = Math.min(a, 5);
+            
+            let numerator = (20 * d_a) + (4 * effectiveCount);
+            let denominator = 20 + (5 * a_denominator);
+            
+            if (denominator !== 0) {
+                // Math.round でスマートに四捨五入
+                lethality = Math.round(numerator / denominator);
+            }
+        }
+        // --- 修正箇所 ここまで ---
+        
+        // 脅威度判定用（キャップ前の純粋な値）
+        let rawLethality = lethality;
+        
+        // 表示用の上限キャップ (0〜99%)
+        lethality = Math.max(0, Math.min(99, lethality));
+
+        // 結果表示エリアの展開
+        document.getElementById('result-area').style.display = 'block';
+        
+        // メイン表示 (補正が入った場合は警告メッセージも出力)
+        let display = document.getElementById('lethality-display');
+        display.innerHTML = `LETHALITY: <span style="font-size:2rem;">${lethality}%</span> <span style="font-size:1rem; font-weight:normal;">(対象:${actualTargets}体)</span>${warningText}`;
+        
+        // 脅威度判定
+        let threat = document.getElementById('threat-level');
+        if (rawLethality >= 100) {
+            threat.innerHTML = "<span class='warning-text'>[STATUS: INSTANT DEATH]</span> 対象は即座に排除される。";
+        } else if (rawLethality >= 50) {
+            threat.innerHTML = "<span class='warning-text'>[STATUS: CATASTROPHIC]</span> 災害級の威力。生存困難。";
+        } else if (rawLethality >= 15) {
+            threat.innerHTML = "[STATUS: HIGH] 重火器クラスの脅威。";
+        } else {
+            threat.innerHTML = "[STATUS: MODERATE] 通常火器クラス。";
+        }
+
+        // 【追加機能③】ダメージ例のダイナミック(乱数)生成
+        let roll = Math.floor(Math.random() * 100) + 1; // 1〜100の乱数
+        let tens = Math.floor(roll / 10);
+        let ones = roll % 10;
+        
+        // デルタグリーンのルール: 100(00)は出目の合計が0になる
+        if (roll === 100) { tens = 0; ones = 0; }
+        
+        let exampleDmg = tens + ones;
+        let finalDmg = Math.max(0, exampleDmg - a);
+        
+        // 致死率0%の場合は即死判定を強制的に失敗とする
+        let isLethal = (roll <= lethality) && (lethality > 0); 
+        
+        let resultText = "";
+        
+        // 致死率が0%のとき、出目にかかわらず「無効」として処理する
+        if (lethality === 0) {
+            resultText = `<span style="color:#888888; font-weight:bold;">[無効]</span> 装甲または特殊耐性により完全に阻まれた`;
+        } else if (isLethal) {
+            resultText = `<span style="color:#ff3333; font-weight:bold;">[即死判定 成功]</span>`;
+        } else {
+            resultText = `${finalDmg}ダメージ <span style="color:#666;">(出目合計${exampleDmg} - 装甲${a})</span>`;
+        }
+
+        // 実行のたびに出目の例が変わる
+        document.getElementById('damage-example').innerHTML = 
+            `>> SIMULATION: 出目<span style="color:#fff; font-weight:bold;">${roll}</span>の場合 ➔ ${resultText}`;
+    }
+</script>
+
+</body>
+</html>
